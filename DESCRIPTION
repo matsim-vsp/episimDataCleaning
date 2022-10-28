@@ -17,7 +17,8 @@ Imports:
     purrr,
     readr,
     readxl,
+    scales,
     stringr,
     tibble,
     tidyr,
-    xlsx
+    xlsx,
