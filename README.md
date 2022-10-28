@@ -6,6 +6,9 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
+**ATTENTION** : This is currently a work in progress and not ready for
+internal (and/or external) usage!
+
 The goal of episimDataCleaning is to …
 
 ## Installation
@@ -22,4 +25,5 @@ devtools::install_github("matsim-vsp/episimDataCleaning")
 
 The episimDataCleaning package contains the following functions:
 
-- 
+- **rki_incidence_federal_state** :
+- **rki_vaccination_rate_fed_state** :
