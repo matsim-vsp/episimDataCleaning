@@ -24,5 +24,5 @@ A list: 1) data frame containing the weekly vaccination counts for the selected 
 Vaccination counts and manufacturer shares on federal state level
 }
 \examples{
-vaccinationCountsAndShares <- rki_vaccination_quantities_and_shares("Bayern", FALSE, FALSE)
+Bayern <- rki_vaccination_quantities_and_shares("Bayern", FALSE, FALSE)
 }

@@ -7,16 +7,17 @@
 #' @import ggplot2
 #' @import dplyr
 #' @import readr
+#' @import rlang
 #' @import scales
 #'
 #' @return A list: 1) data frame containing the weekly vaccination counts for the selected state, 2) counts containing the shares of the different manufacturers, 3) Plot of counts over time, 4) Plots of shares
 #' @export
 #'
 #' @examples
-#' vaccinationCountsAndShares <- rki_vaccination_quantities_and_shares("Bayern", FALSE, FALSE)
+#' Bayern <- rki_vaccination_quantities_and_shares("Bayern", FALSE, FALSE)
 
 
-rki_vaccination_quantities_and_shares <- function(federal_state, save_data_sets, save_plots){
+rki_vaccination_quantities_and_shares <- function(federal_state, save_data_sets, save_plots) {
 
   #Creating some warning messages for the user
   federal_stateOptions <- c("Bundesresorts", paste("Baden-W","\\u00fc","rttemberg"), "Bayern", "Berlin", "Brandenburg", "Bremen", "Hamburg", "Hessen", "Mecklenburg-Vorpommern", "Niedersachsen", "Nordrhein-Westfalen", "Rheinland-Pfalz", "Saarland", "Sachsen", "Sachsen-Anhalt", "Schleswig-Holstein", paste("Th","\\u00fc","ringen"))
@@ -50,23 +51,23 @@ rki_vaccination_quantities_and_shares <- function(federal_state, save_data_sets,
   dict_state_id[nrow(dict_state_id) + 1, ] <- c("Bundesresorts", "17")
 
 
-  bundesland <- Rohdaten %>% group_by("BundeslandId_Impfort", "Impfstoff") %>%
-    filter("Impfserie" == "1") %>%
-    summarise(date = max("Impfdatum"), first_jabs = sum("Anzahl"))
+  bundesland <- Rohdaten %>% dplyr::group_by(rlang::.data$BundeslandId_Impfort, rlang::.data$Impfstoff) %>%
+  filter(rlang::.data$Impfserie == "1") %>%
+    dplyr::summarise(date = max(rlang::.data$Impfdatum), first_jabs = sum(rlang::.data$Anzahl))
 
 
-  weekly_sum <- Rohdaten %>% filter("Impfserie" == "1") %>%
-  group_by(BundeslandId_Impfort, date = cut("Impfdatum", "week"), "Impfstoff", "Impfserie") %>%
-  summarise(value = sum("Anzahl"))
+  weekly_sum <- Rohdaten %>% filter(rlang::.data$Impfserie == "1") %>%
+  dplyr::group_by(BundeslandId_Impfort, date = cut("Impfdatum", "week"), "Impfstoff", "Impfserie") %>%
+  dplyr::summarise(value = sum("Anzahl"))
   weekly_sum$date <- as.Date(weekly_sum$date)
-  weekly_sum <- mutate(weekly_sum, bundesland = dict_state_id[which(dict_state_id$ID == "BundeslandId_Impfort"), 1])
+  weekly_sum <- dplyr::mutate(weekly_sum, bundesland = dict_state_id[which(dict_state_id$ID == "BundeslandId_Impfort"), 1])
 
-  shares <- bundesland %>% group_by("BundeslandId_Impfort") %>%
-  summarise(Impfstoff = "Impfstoff", share = "first_jabs" / sum(first_jabs))
+  shares <- bundesland %>% dplyr::group_by("BundeslandId_Impfort") %>%
+  dplyr::summarise(Impfstoff = rlang::.data$Impfstoff, share = rlang::.data$first_jabs / sum(rlang::.data$first_jabs))
   shares$share <- 100 * round(shares$share, digits = 2)
-  shares <- arrange(shares, desc("Impfstoff"))
-  shares <- shares %>% group_by("BundeslandId_Impfort") %>%
-  summarise(share = "share", Impfstoff = "Impfstoff", neededForPieChart = cumsum("share") - "share" / 2, bundesland = dict_state_id[which(dict_state_id$ID == BundeslandId_Impfort), 1])
+  shares <- dplyr::arrange(shares, dplyr::desc(rlang::.data$Impfstoff))
+  shares <- shares %>% dplyr::group_by(rlang::.data$BundeslandId_Impfort) %>%
+  dplyr::summarise(share = "share", Impfstoff = "Impfstoff", neededForPieChart = cumsum("share") - "share" / 2, bundesland = dict_state_id[which(dict_state_id$ID == BundeslandId_Impfort), 1])
 
   #From here: Plot quantities and shares for one(!) federal state.
   #OkabeItoPalette
@@ -74,31 +75,31 @@ rki_vaccination_quantities_and_shares <- function(federal_state, save_data_sets,
 
   plot_counts <- weekly_sum %>% dplyr::filter(bundesland == federal_state) %>%
     ggplot2::ggplot() +
-    geom_line(aes(x = date, y = "value", col = "Impfstoff"), size = 1.1) +
-    theme_minimal() +
-    theme(legend.position = "bottom", text = element_text(size = 20)) +
-    ggtitle(paste("Weekly quantities for", federal_state, "(Erstimpfung)")) +
-    scale_color_manual(values = okabeIto[2:9]) +
-    ylab("Anzahl") +
-    xlab("Datum") +
-    scale_y_continuous(labels = scales::comma) +
-    theme(legend.title = element_blank()) +
+    ggplot2::geom_line(ggplot2::aes(x = date, y = rlang::.data$value, col = rlang::.data$Impfstoff), size = 1.1) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(legend.position = "bottom", text = ggplot2::element_text(size = 20)) +
+    ggplot2::ggtitle(paste("Weekly quantities for", federal_state, "(Erstimpfung)")) +
+    ggplot2::scale_color_manual(values = okabeIto[2:9]) +
+    ggplot2::ylab("Anzahl") +
+    ggplot2::xlab("Datum") +
+    ggplot2::scale_y_continuous(labels = scales::comma) +
+    theme(legend.title = ggplot2::element_blank()) +
     theme(plot.title = element_text(hjust = 0.5))
   if (save_plots == TRUE) {
     ggplot2::ggsave(paste("rkiVaccinationCounts", federal_state, ".png"), width = 12.5, height = 6, dpi = 300)
   }
 
   plot_shares <- shares %>% dplyr::filter(bundesland == federal_state) %>%
-  arrange(desc(neededForPieChart)) %>%
-  ggplot2::ggplot(aes(x = "", y = "share", fill = "Impfstoff")) +
-    geom_bar(stat = "identity", color = 1) +
-    coord_polar(theta = "y", start = 0) +
-    ggtitle(paste("Manufacturer shares for, federal_state ,(Erstimpfung)")) +
-    geom_label_repel(aes(y = neededForPieChart, label = paste0(share, "%")), force_pull = 100, nudge_x = 1, show.legend=FALSE) +
-    scale_fill_manual(values = okabeIto[2:9]) +
-    theme_void() +
-    theme(legend.position = "bottom", text = element_text(size = 20)) +
-    theme(legend.title = element_blank()) +
+  ggplot2::arrange(ggplot2::desc(rlang::.data$neededForPieChart)) %>%
+  ggplot2::ggplot(ggplot2::aes(x = "", y = rlang::.data$share, fill = "Impfstoff")) +
+    ggplot2::geom_bar(stat = "identity", color = 1) +
+    ggplot2::coord_polar(theta = "y", start = 0) +
+    ggplot2::ggtitle(paste("Manufacturer shares for, federal_state ,(Erstimpfung)")) +
+    ggplot2::geom_label_repel(aes(y = rlang::.data$neededForPieChart, label = paste0(rlang::.data$share, "%")), force_pull = 100, nudge_x = 1, show.legend=FALSE) +
+    ggplot2::scale_fill_manual(values = okabeIto[2:9]) +
+    ggplot2::theme_void() +
+    ggplot2::theme(legend.position = "bottom", text = ggplot2::element_text(size = 20)) +
+    theme(legend.title = ggplot2::element_blank()) +
     theme(plot.title = element_text(hjust = 0.5))
 
   if (save_plots == TRUE) {
@@ -108,9 +109,9 @@ rki_vaccination_quantities_and_shares <- function(federal_state, save_data_sets,
   weekly_sum <- filter(weekly_sum, bundesland == federal_state)
   shares <- filter(shares, bundesland == federal_state)
 
-  if (save_data_sets == TRUE){
-    write_csv(weekly_sum, paste("weeklyVaccinationCounts", federal_state, ".csv"))
-    write_csv(shares, paste("vaccinationShares", federal_state, ".csv"))
+  if (save_data_sets == TRUE) {
+    readr::write_csv(weekly_sum, paste("weeklyVaccinationCounts", federal_state, ".csv"))
+    readr::write_csv(shares, paste("vaccinationShares", federal_state, ".csv"))
   }
 
   return(list(vaccination_counts = weekly_sum, shares = shares, plot_counts = plot_counts, plot_shares = plot_shares)) 
