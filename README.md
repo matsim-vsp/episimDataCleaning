@@ -33,3 +33,4 @@ The episimDataCleaning package contains the following functions:
 - **rki_vaccination_quantities_and_shares** :
 - **divi_admission_federal_state** :
 - **rki_vocs** : 
+- **rki_incidence_county** : 
